@@ -2,4 +2,4 @@ out/
 .idea/
 CensusCount.iml
 *.class
-AmazonFineFoodReview*
+*.csv
