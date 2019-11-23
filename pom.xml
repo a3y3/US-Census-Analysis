@@ -1,12 +1,22 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>dev.a3y3.census</groupId>
-    <artifactId>census-count</artifactId>
-    <version>0.1-alpha</version>
+    <!-- parent pom -->
+    <parent>
+        <artifactId>parallelcomputing</artifactId>
+        <groupId>edu.rit.cs</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>edu.rit.cs</groupId>
+    <artifactId>word_count</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>word_count</name>
+    <url>http://maven.apache.org</url>
+
     <properties>
         <junit.jupiter.version>5.3.2</junit.jupiter.version>
         <scala.binary.version>2.12</scala.binary.version>
@@ -128,5 +138,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

@@ -1,5 +1,7 @@
 out/
 .idea/
-CensusCount.iml
+*.iml
 *.class
 *.csv
+.LocalMavenRepo/
+target/
