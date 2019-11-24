@@ -1,5 +1,5 @@
 # US-Census-Analysis
-An Apache Spark program that performs analysis on a the [US Cenus dataset](https://www.census.gov/data/tables/2017/demo/popest/counties-detail.html).
+An Apache Spark Map-Reduce program that performs analysis on a the [US Cenus dataset](https://www.census.gov/data/tables/2017/demo/popest/counties-detail.html).
 
 Specifically, it calculates the [Diversity Index](https://catalog.data.gov/dataset/diversity-index) for specific races during the years 2010-2017.
 
