@@ -2,13 +2,13 @@ import java.io.Serializable;
 
 public class CensusRecord implements Serializable {
     public String STNAME, CTYNAME;
-    public int YEAR, AGEGRP, WA_TOTAL, BA_TOTAL, IA_TOTAL, AA_TOTAL, NA_TOTAL,
+    public double YEAR, AGEGRP, WA_TOTAL, BA_TOTAL, IA_TOTAL, AA_TOTAL, NA_TOTAL,
             TOM_TOTAL;
 
     public CensusRecord(){}
-    public CensusRecord(String STNAME, String CTYNAME, int YEAR, int AGEGRP, int WA_TOTAL,
-                        int BA_TOTAL, int IA_TOTAL, int AA_TOTAL, int NA_TOTAL,
-                        int TOM_TOTAL) {
+    public CensusRecord(String STNAME, String CTYNAME, double YEAR, double AGEGRP, double WA_TOTAL,
+                        double BA_TOTAL, double IA_TOTAL, double AA_TOTAL, double NA_TOTAL,
+                        double TOM_TOTAL) {
         this.STNAME = STNAME;
         this.CTYNAME = CTYNAME;
         this.YEAR = YEAR;
@@ -37,67 +37,68 @@ public class CensusRecord implements Serializable {
         this.CTYNAME = CTYNAME;
     }
 
-    public int getYEAR() {
+    public double getYEAR() {
         return YEAR;
     }
 
-    public void setYEAR(int YEAR) {
+    public void setYEAR(double YEAR) {
         this.YEAR = YEAR;
     }
 
-    public int getAGEGRP() {
+    public double getAGEGRP() {
         return AGEGRP;
     }
 
-    public void setAGEGRP(int AGEGRP) {
+    public void setAGEGRP(double AGEGRP) {
         this.AGEGRP = AGEGRP;
     }
 
-    public int getWA_TOTAL() {
+    public double getWA_TOTAL() {
         return WA_TOTAL;
     }
 
-    public void setWA_TOTAL(int WA_TOTAL) {
+    public void setWA_TOTAL(double WA_TOTAL) {
         this.WA_TOTAL = WA_TOTAL;
     }
 
-    public int getBA_TOTAL() {
+    public double getBA_TOTAL() {
         return BA_TOTAL;
     }
 
-    public void setBA_TOTAL(int BA_TOTAL) {
+    public void setBA_TOTAL(double BA_TOTAL) {
         this.BA_TOTAL = BA_TOTAL;
     }
 
-    public int getIA_TOTAL() {
+    public double getIA_TOTAL() {
         return IA_TOTAL;
     }
 
-    public void setIA_TOTAL(int IA_TOTAL) {
+    public void setIA_TOTAL(double IA_TOTAL) {
         this.IA_TOTAL = IA_TOTAL;
     }
 
-    public int getAA_TOTAL() {
+    public double getAA_TOTAL() {
         return AA_TOTAL;
     }
 
-    public void setAA_TOTAL(int AA_TOTAL) {
+    public void setAA_TOTAL(double AA_TOTAL) {
         this.AA_TOTAL = AA_TOTAL;
     }
 
-    public int getNA_TOTAL() {
+    public double getNA_TOTAL() {
         return NA_TOTAL;
     }
 
-    public void setNA_TOTAL(int NA_TOTAL) {
+    public void setNA_TOTAL(double NA_TOTAL) {
         this.NA_TOTAL = NA_TOTAL;
     }
 
-    public int getTOM_TOTAL() {
+    public double getTOM_TOTAL() {
         return TOM_TOTAL;
     }
 
-    public void setTOM_TOTAL(int TOM_TOTAL) {
+    public void setTOM_TOTAL(double TOM_TOTAL) {
         this.TOM_TOTAL = TOM_TOTAL;
     }
 }
+

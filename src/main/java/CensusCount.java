@@ -22,12 +22,12 @@ public class CensusCount {
         SparkSession sparkSession = SparkSession.builder().config(sparkConf).getOrCreate();
         JavaSparkContext jsc = new JavaSparkContext(sparkSession.sparkContext());
         CensusCount censusCount = new CensusCount();
-        censusCount.printData(sparkSession, jsc);
+        censusCount.printData(sparkSession);
         jsc.close();
         sparkSession.close();
     }
 
-    void printData(SparkSession sparkSession, JavaSparkContext javaSparkContext) {
+    void printData(SparkSession sparkSession) {
         Dataset dataset = sparkSession.read()
                 .option("header", "true")
                 .option("delimiter", ",")
@@ -36,20 +36,20 @@ public class CensusCount {
 
         dataset = dataset.withColumn("STNAME", dataset.col("STNAME"))
                 .withColumn("CTYNAME", dataset.col("CTYNAME"))
-                .withColumn("YEAR", dataset.col("YEAR").cast(DataTypes.IntegerType))
-                .withColumn("AGEGRP", dataset.col("AGEGRP").cast(DataTypes.IntegerType))
-                .withColumn("WA_MALE", dataset.col("WA_MALE").cast(DataTypes.IntegerType))
-                .withColumn("WA_FEMALE", dataset.col("WA_FEMALE").cast(DataTypes.IntegerType))
-                .withColumn("BA_MALE", dataset.col("BA_MALE").cast(DataTypes.IntegerType))
-                .withColumn("BA_FEMALE", dataset.col("BA_FEMALE").cast(DataTypes.IntegerType))
-                .withColumn("IA_MALE", dataset.col("IA_MALE").cast(DataTypes.IntegerType))
-                .withColumn("IA_FEMALE", dataset.col("IA_FEMALE").cast(DataTypes.IntegerType))
-                .withColumn("AA_MALE", dataset.col("AA_MALE").cast(DataTypes.IntegerType))
-                .withColumn("AA_FEMALE", dataset.col("AA_FEMALE").cast(DataTypes.IntegerType))
-                .withColumn("NA_MALE", dataset.col("NA_MALE").cast(DataTypes.IntegerType))
-                .withColumn("NA_FEMALE", dataset.col("NA_FEMALE").cast(DataTypes.IntegerType))
-                .withColumn("TOM_MALE", dataset.col("TOM_MALE").cast(DataTypes.IntegerType))
-                .withColumn("TOM_FEMALE", dataset.col("TOM_FEMALE").cast(DataTypes.IntegerType));
+                .withColumn("YEAR", dataset.col("YEAR").cast(DataTypes.DoubleType))
+                .withColumn("AGEGRP", dataset.col("AGEGRP").cast(DataTypes.DoubleType))
+                .withColumn("WA_MALE", dataset.col("WA_MALE").cast(DataTypes.DoubleType))
+                .withColumn("WA_FEMALE", dataset.col("WA_FEMALE").cast(DataTypes.DoubleType))
+                .withColumn("BA_MALE", dataset.col("BA_MALE").cast(DataTypes.DoubleType))
+                .withColumn("BA_FEMALE", dataset.col("BA_FEMALE").cast(DataTypes.DoubleType))
+                .withColumn("IA_MALE", dataset.col("IA_MALE").cast(DataTypes.DoubleType))
+                .withColumn("IA_FEMALE", dataset.col("IA_FEMALE").cast(DataTypes.DoubleType))
+                .withColumn("AA_MALE", dataset.col("AA_MALE").cast(DataTypes.DoubleType))
+                .withColumn("AA_FEMALE", dataset.col("AA_FEMALE").cast(DataTypes.DoubleType))
+                .withColumn("NA_MALE", dataset.col("NA_MALE").cast(DataTypes.DoubleType))
+                .withColumn("NA_FEMALE", dataset.col("NA_FEMALE").cast(DataTypes.DoubleType))
+                .withColumn("TOM_MALE", dataset.col("TOM_MALE").cast(DataTypes.DoubleType))
+                .withColumn("TOM_FEMALE", dataset.col("TOM_FEMALE").cast(DataTypes.DoubleType));
 
         dataset = dataset.select("STNAME", "CTYNAME", "YEAR", "AGEGRP",
                 "WA_MALE", "WA_FEMALE", "BA_MALE", "BA_FEMALE", "IA_MALE",
@@ -70,14 +70,6 @@ public class CensusCount {
                         dataset.col("TOM_MALE").plus(dataset.col("TOM_FEMALE")));
         dataset = dataset.select("STNAME", "CTYNAME", "YEAR", "AGEGRP", "WA_TOTAL",
                 "BA_TOTAL", "IA_TOTAL", "AA_TOTAL", "NA_TOTAL", "TOM_TOTAL");
-//        dataset.show();
-//        dataset = dataset.withColumn("TOTAL_INDIVIDUALS",
-//                dataset.col("WA_TOTAL")
-//                        .plus(dataset.col("BA_TOTAL"))
-//                        .plus(dataset.col("IA_TOTAL"))
-//                        .plus(dataset.col("AA_TOTAL"))
-//                        .plus(dataset.col("NA_TOTAL"))
-//                        .plus(dataset.col("TOM_TOTAL")));
 
         Encoder<CensusRecord> reviewEncoder = Encoders.bean(CensusRecord.class);
         Dataset<CensusRecord> ds1 = dataset.as(reviewEncoder);
@@ -87,22 +79,38 @@ public class CensusCount {
         ds2.show();
         JavaRDD<CensusRecord> javaRDD = ds2.javaRDD();
 
-
-        JavaPairRDD<String, CensusRecord> javaPairRDD = javaRDD.mapToPair(
-                (PairFunction<CensusRecord, String, CensusRecord>) censusRecord ->
-                        new Tuple2<>(censusRecord.CTYNAME, censusRecord));
-        JavaPairRDD<String, CensusRecord> result = javaPairRDD.reduceByKey((
-                Function2<CensusRecord, CensusRecord, CensusRecord>) (record1, record2) ->
-                new CensusRecord(record1.STNAME,
-                        record1.CTYNAME,
-                        record1.YEAR + record2.YEAR,
-                        record1.AGEGRP + record2.AGEGRP,
-                        record1.WA_TOTAL + record2.WA_TOTAL,
-                        record1.BA_TOTAL + record2.BA_TOTAL,
-                        record1.IA_TOTAL + record2.IA_TOTAL,
-                        record1.AA_TOTAL + record2.AA_TOTAL,
-                        record1.NA_TOTAL + record2.NA_TOTAL,
-                        record1.TOM_TOTAL + record2.TOM_TOTAL));
+        JavaPairRDD<Tuple2<String, String>, CensusRecord> javaPairRDD =
+                javaRDD.mapToPair((PairFunction<CensusRecord, Tuple2<String, String>,
+                        CensusRecord>) record ->
+                        new Tuple2<>(new Tuple2<>(record.STNAME, record.CTYNAME),
+                                record));
+        JavaPairRDD<Tuple2<String, String>, CensusRecord> result =
+                javaPairRDD.reduceByKey((Function2<CensusRecord,
+                        CensusRecord, CensusRecord>) (record1, record2) -> new CensusRecord(record1.STNAME,
+                                record1.CTYNAME,
+                                record1.YEAR + record2.YEAR,
+                                record1.AGEGRP + record2.AGEGRP,
+                                record1.WA_TOTAL + record2.WA_TOTAL,
+                                record1.BA_TOTAL + record2.BA_TOTAL,
+                                record1.IA_TOTAL + record2.IA_TOTAL,
+                                record1.AA_TOTAL + record2.AA_TOTAL,
+                                record1.NA_TOTAL + record2.NA_TOTAL,
+                                record1.TOM_TOTAL + record2.TOM_TOTAL));
+//        JavaPairRDD<String, CensusRecord> javaPairRDD = javaRDD.mapToPair(
+//                (PairFunction<CensusRecord, String, CensusRecord>) censusRecord ->
+//                        new Tuple2<>(censusRecord.CTYNAME, censusRecord));
+//        JavaPairRDD<String, CensusRecord> result = javaPairRDD.reduceByKey((
+//                Function2<CensusRecord, CensusRecord, CensusRecord>) (record1, record2) ->
+//                new CensusRecord(record1.STNAME,
+//                        record1.CTYNAME,
+//                        record1.YEAR + record2.YEAR,
+//                        record1.AGEGRP + record2.AGEGRP,
+//                        record1.WA_TOTAL + record2.WA_TOTAL,
+//                        record1.BA_TOTAL + record2.BA_TOTAL,
+//                        record1.IA_TOTAL + record2.IA_TOTAL,
+//                        record1.AA_TOTAL + record2.AA_TOTAL,
+//                        record1.NA_TOTAL + record2.NA_TOTAL,
+//                        record1.TOM_TOTAL + record2.TOM_TOTAL));
 
         JavaRDD<CensusRecord> reducedValues = result.values();
         Dataset<CensusRecord> reducedRecords = sparkSession.createDataset(reducedValues.rdd(),
@@ -110,14 +118,51 @@ public class CensusCount {
 
         dataset = reducedRecords.select("STNAME", "CTYNAME", "WA_TOTAL",
                 "BA_TOTAL", "IA_TOTAL", "AA_TOTAL", "NA_TOTAL", "TOM_TOTAL");
-        dataset = dataset.withColumn("TOTAL_INDIVIDUALS",
+        dataset = dataset.withColumn("T",
                 dataset.col("WA_TOTAL")
                         .plus(dataset.col("BA_TOTAL"))
                         .plus(dataset.col("IA_TOTAL"))
                         .plus(dataset.col("AA_TOTAL"))
                         .plus(dataset.col("NA_TOTAL"))
                         .plus(dataset.col("TOM_TOTAL")));
+        dataset = dataset.withColumn("T^2",
+                dataset.col("T").multiply(dataset.col("T")));
+        dataset = dataset.withColumn("SUM_WA",
+                dataset.col("T")
+                        .minus(dataset.col("WA_TOTAL"))
+                        .multiply(dataset.col("WA_TOTAL")));
+        dataset = dataset.withColumn("SUM_BA",
+                dataset.col("T")
+                        .minus(dataset.col("BA_TOTAL"))
+                        .multiply(dataset.col("BA_TOTAL")));
+        dataset = dataset.withColumn("SUM_IA",
+                dataset.col("T")
+                        .minus(dataset.col("IA_TOTAL"))
+                        .multiply(dataset.col("IA_TOTAL")));
+        dataset = dataset.withColumn("SUM_AA",
+                dataset.col("T")
+                        .minus(dataset.col("AA_TOTAL"))
+                        .multiply(dataset.col("AA_TOTAL")));
+        dataset = dataset.withColumn("SUM_NA",
+                dataset.col("T")
+                        .minus(dataset.col("NA_TOTAL"))
+                        .multiply(dataset.col("NA_TOTAL")));
+        dataset = dataset.withColumn("SUM_TOM",
+                dataset.col("T")
+                        .minus(dataset.col("TOM_TOTAL"))
+                        .multiply(dataset.col("TOM_TOTAL")));
 
+        dataset = dataset.withColumn("SUM_TOTAL",
+                dataset.col("SUM_WA")
+                        .plus(dataset.col("SUM_BA"))
+                        .plus(dataset.col("SUM_IA"))
+                        .plus(dataset.col("SUM_AA"))
+                        .plus(dataset.col("SUM_NA"))
+                        .plus(dataset.col("SUM_TOM")));
+        dataset = dataset.withColumn("Diversity Index",
+                dataset.col("SUM_TOTAL").divide(dataset.col("T^2")));
+
+        dataset = dataset.orderBy("STNAME", "CTYNAME");
         dataset.show();
     }
 }
