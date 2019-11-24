@@ -8,12 +8,17 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import scala.*;
 
-import java.io.StringReader;
-import java.lang.Double;
-
+/**
+ * Uses Apache Spark to find the Diversity Index for a given set of races from the US
+ * Census Data.
+ */
 public class CensusCount {
     private static final String DATASET = "data.csv";
 
+    /**
+     * Creates spark context and session and calls {@code runProgram}.
+     * @param args STDIN.
+     */
     public static void main(String[] args) {
         SparkConf sparkConf = new SparkConf();
         sparkConf.set("spark.master", "local[4]");
@@ -22,34 +27,21 @@ public class CensusCount {
         SparkSession sparkSession = SparkSession.builder().config(sparkConf).getOrCreate();
         JavaSparkContext jsc = new JavaSparkContext(sparkSession.sparkContext());
         CensusCount censusCount = new CensusCount();
-        censusCount.printData(sparkSession);
+        censusCount.runProgram(sparkSession);
         jsc.close();
         sparkSession.close();
     }
 
-    void printData(SparkSession sparkSession) {
+    /**
+     * Runs the analysis by using Spark Datasets and JavaRDD.
+     * @param sparkSession the current spark session passed from main.
+     */
+    private void runProgram(SparkSession sparkSession) {
         Dataset dataset = sparkSession.read()
                 .option("header", "true")
                 .option("delimiter", ",")
                 .option("inferSchema", "true")
                 .csv(DATASET);
-
-        dataset = dataset.withColumn("STNAME", dataset.col("STNAME"))
-                .withColumn("CTYNAME", dataset.col("CTYNAME"))
-                .withColumn("YEAR", dataset.col("YEAR").cast(DataTypes.DoubleType))
-                .withColumn("AGEGRP", dataset.col("AGEGRP").cast(DataTypes.DoubleType))
-                .withColumn("WA_MALE", dataset.col("WA_MALE").cast(DataTypes.DoubleType))
-                .withColumn("WA_FEMALE", dataset.col("WA_FEMALE").cast(DataTypes.DoubleType))
-                .withColumn("BA_MALE", dataset.col("BA_MALE").cast(DataTypes.DoubleType))
-                .withColumn("BA_FEMALE", dataset.col("BA_FEMALE").cast(DataTypes.DoubleType))
-                .withColumn("IA_MALE", dataset.col("IA_MALE").cast(DataTypes.DoubleType))
-                .withColumn("IA_FEMALE", dataset.col("IA_FEMALE").cast(DataTypes.DoubleType))
-                .withColumn("AA_MALE", dataset.col("AA_MALE").cast(DataTypes.DoubleType))
-                .withColumn("AA_FEMALE", dataset.col("AA_FEMALE").cast(DataTypes.DoubleType))
-                .withColumn("NA_MALE", dataset.col("NA_MALE").cast(DataTypes.DoubleType))
-                .withColumn("NA_FEMALE", dataset.col("NA_FEMALE").cast(DataTypes.DoubleType))
-                .withColumn("TOM_MALE", dataset.col("TOM_MALE").cast(DataTypes.DoubleType))
-                .withColumn("TOM_FEMALE", dataset.col("TOM_FEMALE").cast(DataTypes.DoubleType));
 
         dataset = dataset.select("STNAME", "CTYNAME", "YEAR", "AGEGRP",
                 "WA_MALE", "WA_FEMALE", "BA_MALE", "BA_FEMALE", "IA_MALE",
@@ -87,30 +79,15 @@ public class CensusCount {
         JavaPairRDD<Tuple2<String, String>, CensusRecord> result =
                 javaPairRDD.reduceByKey((Function2<CensusRecord,
                         CensusRecord, CensusRecord>) (record1, record2) -> new CensusRecord(record1.STNAME,
-                                record1.CTYNAME,
-                                record1.YEAR + record2.YEAR,
-                                record1.AGEGRP + record2.AGEGRP,
-                                record1.WA_TOTAL + record2.WA_TOTAL,
-                                record1.BA_TOTAL + record2.BA_TOTAL,
-                                record1.IA_TOTAL + record2.IA_TOTAL,
-                                record1.AA_TOTAL + record2.AA_TOTAL,
-                                record1.NA_TOTAL + record2.NA_TOTAL,
-                                record1.TOM_TOTAL + record2.TOM_TOTAL));
-//        JavaPairRDD<String, CensusRecord> javaPairRDD = javaRDD.mapToPair(
-//                (PairFunction<CensusRecord, String, CensusRecord>) censusRecord ->
-//                        new Tuple2<>(censusRecord.CTYNAME, censusRecord));
-//        JavaPairRDD<String, CensusRecord> result = javaPairRDD.reduceByKey((
-//                Function2<CensusRecord, CensusRecord, CensusRecord>) (record1, record2) ->
-//                new CensusRecord(record1.STNAME,
-//                        record1.CTYNAME,
-//                        record1.YEAR + record2.YEAR,
-//                        record1.AGEGRP + record2.AGEGRP,
-//                        record1.WA_TOTAL + record2.WA_TOTAL,
-//                        record1.BA_TOTAL + record2.BA_TOTAL,
-//                        record1.IA_TOTAL + record2.IA_TOTAL,
-//                        record1.AA_TOTAL + record2.AA_TOTAL,
-//                        record1.NA_TOTAL + record2.NA_TOTAL,
-//                        record1.TOM_TOTAL + record2.TOM_TOTAL));
+                        record1.CTYNAME,
+                        record1.YEAR + record2.YEAR,
+                        record1.AGEGRP + record2.AGEGRP,
+                        record1.WA_TOTAL + record2.WA_TOTAL,
+                        record1.BA_TOTAL + record2.BA_TOTAL,
+                        record1.IA_TOTAL + record2.IA_TOTAL,
+                        record1.AA_TOTAL + record2.AA_TOTAL,
+                        record1.NA_TOTAL + record2.NA_TOTAL,
+                        record1.TOM_TOTAL + record2.TOM_TOTAL));
 
         JavaRDD<CensusRecord> reducedValues = result.values();
         Dataset<CensusRecord> reducedRecords = sparkSession.createDataset(reducedValues.rdd(),
@@ -162,6 +139,7 @@ public class CensusCount {
         dataset = dataset.withColumn("Diversity Index",
                 dataset.col("SUM_TOTAL").divide(dataset.col("T^2")));
 
+        dataset = dataset.select("STNAME", "CTYNAME", "Diversity Index");
         dataset = dataset.orderBy("STNAME", "CTYNAME");
         dataset.show();
     }
